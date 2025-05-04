@@ -11,6 +11,7 @@ import { ConfigModule } from '@nestjs/config';
     UserModule,
     BookmarkModule,
     PrismaModule,
+    UserModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),

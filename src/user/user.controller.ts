@@ -9,7 +9,6 @@ import { User } from '@prisma/client';
 export class UserController {
   constructor(
     private userService: UserService,
-    private authGuard: AuthGuard,
   ) {}
 
   @Get('me')

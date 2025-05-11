@@ -1,6 +1,7 @@
 import {
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -9,6 +10,7 @@ import * as argon from 'argon2';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -64,15 +66,55 @@ export class AuthService {
   async signToken(
     userId: number,
     email: string,
-  ): Promise<{ access_token: string }> {
+  ): Promise<{ access_token: string, refreshToken:string }> {
     const payload = {
-      sub: userId,
+      id: userId,
       email,
     };
     const secret = await this.jwt.signAsync(payload, {
-      expiresIn: '15m',
+      expiresIn: '1h',
       secret: this.config.get('JWT_SECRET'),
     });
-    return { access_token: secret };
+    const refreshToken = await this.createRefreshToken(userId)
+    return { access_token: secret, refreshToken };
+  }
+
+  async createRefreshToken(userId:number):Promise<string>{
+    const refreshToken = await this.jwt.signAsync({}, {
+      expiresIn: '7d',
+      secret:this.config.get('JWT_SECRET')
+    })
+    await this.prisma.user.update({
+    where: { id: userId },
+    data: { refreshToken }
+  });
+  return refreshToken
+  }
+
+  
+  async refreshAccessToken(refreshToken:string){
+    try {
+          const token = await this.jwt.verifyAsync(refreshToken, {
+      secret:this.config.get("JWT_SECRET")
+    })
+    const user = await this.prisma.user.findFirst({
+      where:{
+        refreshToken
+      }
+    })
+    if(!user){
+      throw new UnauthorizedException("Invalid refresh token")
+    }
+    const payload = {id:user?.id, email:user?.email}
+    return this.jwt.signAsync(payload,{
+      secret: this.config.get("JWT_SECRET")
+    })
+    } catch (error) {
+      if(error instanceof PrismaClientKnownRequestError && error.code === "P2025"){
+        throw new InternalServerErrorException
+      }else{
+        throw error;
+      }
+    }
   }
 }

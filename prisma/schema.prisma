@@ -22,9 +22,10 @@ model User {
 
   firstName String?
   lastName  String?
+  refreshToken String?
 
   bookmarks Bookmark[]
-
+  
   @@map("users")
 }
 
@@ -39,6 +40,8 @@ model Bookmark {
 
   userId Int
   user   User @relation(fields: [userId], references: [id])
+
+  @@unique([id, userId])
 
   @@map("bookmarks")
 }

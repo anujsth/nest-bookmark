@@ -66,7 +66,7 @@ export class AuthService {
   async signToken(
     userId: number,
     email: string,
-  ): Promise<{ access_token: string, refreshToken:string }> {
+  ): Promise<{ access_token: string; refreshToken: string }> {
     const payload = {
       id: userId,
       email,
@@ -75,44 +75,49 @@ export class AuthService {
       expiresIn: '1h',
       secret: this.config.get('JWT_SECRET'),
     });
-    const refreshToken = await this.createRefreshToken(userId)
+    const refreshToken = await this.createRefreshToken(userId);
     return { access_token: secret, refreshToken };
   }
 
-  async createRefreshToken(userId:number):Promise<string>{
-    const refreshToken = await this.jwt.signAsync({}, {
-      expiresIn: '7d',
-      secret:this.config.get('JWT_SECRET')
-    })
+  async createRefreshToken(userId: number): Promise<string> {
+    const refreshToken = await this.jwt.signAsync(
+      {},
+      {
+        expiresIn: '7d',
+        secret: this.config.get('JWT_SECRET'),
+      },
+    );
     await this.prisma.user.update({
-    where: { id: userId },
-    data: { refreshToken }
-  });
-  return refreshToken
+      where: { id: userId },
+      data: { refreshToken },
+    });
+    return refreshToken;
   }
 
-  
-  async refreshAccessToken(refreshToken:string){
+  async refreshAccessToken(refreshToken: string) {
     try {
-          const token = await this.jwt.verifyAsync(refreshToken, {
-      secret:this.config.get("JWT_SECRET")
-    })
-    const user = await this.prisma.user.findFirst({
-      where:{
-        refreshToken
+      const token = await this.jwt.verifyAsync(refreshToken, {
+        secret: this.config.get('JWT_SECRET'),
+      });
+      const user = await this.prisma.user.findFirst({
+        where: {
+          refreshToken,
+        },
+      });
+      if (!user) {
+        throw new UnauthorizedException('Invalid refresh token');
       }
-    })
-    if(!user){
-      throw new UnauthorizedException("Invalid refresh token")
-    }
-    const payload = {id:user?.id, email:user?.email}
-    return this.jwt.signAsync(payload,{
-      secret: this.config.get("JWT_SECRET")
-    })
+      const payload = { id: user?.id, email: user?.email };
+      return this.jwt.signAsync(payload, {
+        secret: this.config.get('JWT_SECRET'),
+      });
     } catch (error) {
-      if(error instanceof PrismaClientKnownRequestError && error.code === "P2025"){
-        throw new InternalServerErrorException
-      }else{
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new InternalServerErrorException();
+      } else {
         throw error;
       }
     }

@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { ImportExportBookmarkModule } from './import-export-bookmark/import-export-bookmark.module';
 import { FolderModule } from './folder/folder.module';
+import { RedisModule } from './redis-module/redis-module.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { FolderModule } from './folder/folder.module';
       isGlobal: true,
     }),
     FolderModule,
+    RedisModule,
   ],
   controllers: [],
   providers: [],

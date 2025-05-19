@@ -25,6 +25,8 @@ model User {
   refreshToken String?
 
   bookmarks Bookmark[]
+
+  folders Folder[]
   
   @@map("users")
 }
@@ -39,9 +41,33 @@ model Bookmark {
   link        String
 
   userId Int
-  user   User @relation(fields: [userId], references: [id])
+  folderId Int?
+
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folder Folder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
 
   @@unique([id, userId])
 
   @@map("bookmarks")
 }
+
+model Folder {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name String
+
+  userId Int
+  user User @relation(fields:[userId], references: [id], onDelete: Cascade)
+
+  parentId Int?
+  parent    Folder?   @relation("FolderHierarchy", fields: [parentId], references: [id])
+  children  Folder[]  @relation("FolderHierarchy")
+
+  bookmarks Bookmark[]
+
+  @@unique([userId,name])
+
+  @@map("folders")
+} 

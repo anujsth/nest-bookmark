@@ -4,6 +4,8 @@ import { UserModule } from './user/user.module';
 import { BookmarkModule } from './bookmark/bookmark.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
+import { ImportExportBookmarkModule } from './import-export-bookmark/import-export-bookmark.module';
+import { FolderModule } from './folder/folder.module';
 
 @Module({
   imports: [
@@ -12,9 +14,11 @@ import { ConfigModule } from '@nestjs/config';
     BookmarkModule,
     PrismaModule,
     UserModule,
+    ImportExportBookmarkModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    FolderModule,
   ],
   controllers: [],
   providers: [],

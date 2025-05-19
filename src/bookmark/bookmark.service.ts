@@ -31,7 +31,7 @@ export class BookmarkService {
     return bookmark;
   }
 
-  async createBookmark(userId:number, bookmark: CreateBookmarkDto) {
+  async createBookmark(userId: number, bookmark: CreateBookmarkDto) {
     return this.prisma.bookmark.create({
       data: {
         title: bookmark.title,
@@ -42,41 +42,48 @@ export class BookmarkService {
     });
   }
 
-  async deleteBookmark(userId:number, bookmarkId:number){
-  try{
+  async deleteBookmark(userId: number, bookmarkId: number) {
+    try {
       const response = await this.prisma.bookmark.delete({
-      where:{
-        userId,
-        id:bookmarkId
+        where: {
+          userId,
+          id: bookmarkId,
+        },
+      });
+      return response;
+    } catch (error) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('Bookmark Not Found');
       }
-    })
-    console.log(response,"helolo")
-    return response
-  }catch(error){
-    console.log(error,"hello")
-    if(error instanceof PrismaClientKnownRequestError && error.code ==='P2025'){
-      throw new NotFoundException("Bookmark Not Found")
+      throw error;
     }
-    throw error
-  }
   }
 
-  async updateBookmark(userId:number, bookmarkId:number, data:UpdateBookmarkDto){
+  async updateBookmark(
+    userId: number,
+    bookmarkId: number,
+    data: UpdateBookmarkDto,
+  ) {
     try {
       const response = await this.prisma.bookmark.update({
         where: {
           userId,
-          id:Number(bookmarkId)
+          id: Number(bookmarkId),
         },
-        data
-      })
-      return response
+        data,
+      });
+      return response;
     } catch (error) {
-          if(error instanceof PrismaClientKnownRequestError && error.code ==='P2025'){
-      throw new NotFoundException("Bookmark Not Found")
-    }
-    throw error
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('Bookmark Not Found');
+      }
+      throw error;
     }
   }
-
 }

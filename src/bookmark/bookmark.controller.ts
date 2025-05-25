@@ -18,9 +18,12 @@ import { CreateBookmarkDto, UpdateBookmarkDto } from './dto';
 export class BookmarkController {
   constructor(private bookmarkService: BookmarkService) {}
 
-  @Get('all')
-  async getBookmarks(@GetUser('id') id: number) {
-    return this.bookmarkService.getBookmarks(id);
+  @Get('all/:search')
+  async getBookmarks(
+    @GetUser('id') id: number,
+    @Param('search') search?: string,
+  ) {
+    return this.bookmarkService.getBookmarks(id, search);
   }
 
   @Post('create')
@@ -51,5 +54,18 @@ export class BookmarkController {
     @Body() data: UpdateBookmarkDto,
   ) {
     return this.bookmarkService.updateBookmark(id, bookmarkId, data);
+  }
+
+  @Patch('addBookmarkToFolder/:id')
+  async addBookmarkToFolder(
+    @GetUser('id') userId: number,
+    @Param('id') bookmarkId: number,
+    @Body('folderId') folderId: number,
+  ) {
+    return this.bookmarkService.addBookmarkToFolder(
+      userId,
+      Number(folderId),
+      Number(bookmarkId),
+    );
   }
 }

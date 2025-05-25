@@ -11,6 +11,7 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { User } from '@prisma/client';
+import { EmailService } from 'src/email/email.service';
 
 @Injectable()
 export class AuthService {
@@ -18,6 +19,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwt: JwtService,
     private config: ConfigService,
+    private emailService: EmailService,
   ) {}
 
   async signup(dto: AuthDto) {
@@ -32,6 +34,17 @@ export class AuthService {
           hash: true,
         },
       });
+
+      // const options = {
+      //   email: dto.email,
+      //   subject: 'Welcome to our service',
+      //   html: `<p>Hello ${user.email},</p>
+      //   <p>Welcome to our community! Your account is now active.</p>
+      //   <p>Enjoy your time with us!</p>`,
+      // };
+
+      // await this.emailService.sendEmail(options);
+
       return user;
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {

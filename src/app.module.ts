@@ -7,6 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ImportExportBookmarkModule } from './import-export-bookmark/import-export-bookmark.module';
 import { FolderModule } from './folder/folder.module';
 import { RedisModule } from './redis-module/redis-module.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { RedisModule } from './redis-module/redis-module.module';
     }),
     FolderModule,
     RedisModule,
+    EmailModule,
   ],
   controllers: [],
   providers: [],

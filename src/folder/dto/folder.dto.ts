@@ -10,4 +10,8 @@ export class CreateFolderDto {
   @IsString()
   @IsNotEmpty()
   name: string;
+
+  @IsNumber()
+  @IsOptional()
+  parentId?: number;
 }

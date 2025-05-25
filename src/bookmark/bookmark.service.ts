@@ -12,7 +12,10 @@ export class BookmarkService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
-  getBookmarksCacheKey(userId: number) {
+  getBookmarksCacheKey(userId: number, search?: string) {
+    if (search) {
+      return `bookmarks:user:${userId}:search:${search}`;
+    }
     return `bookmarks:user:${userId}`;
   }
 
@@ -20,19 +23,29 @@ export class BookmarkService {
     return `bookmark:${bookmarkId}`;
   }
 
-  async getBookmarks(userId: number) {
+  async getBookmarks(userId: number, search?: string) {
     try {
-      const cacheKey = this.getBookmarksCacheKey(userId);
+      const sanitizedSearch = search?.trim() || undefined;
+      const cacheKey = this.getBookmarksCacheKey(userId, sanitizedSearch);
       const cachedBookmarks = await this.cacheManager.get(cacheKey);
+
       if (cachedBookmarks) {
         return cachedBookmarks;
       }
-      const bookmarks = this.prisma.bookmark.findMany({
+
+      const bookmarks = await this.prisma.bookmark.findMany({
         where: {
           userId,
+          ...(search && {
+            title: { contains: search, mode: 'insensitive' },
+          }),
         },
       });
+
+      console.log(bookmarks, 'bookmarks');
+
       await this.cacheManager.set(cacheKey, bookmarks);
+
       return bookmarks;
     } catch (error) {
       console.error('Error fetching bookmarks:', error);
@@ -127,6 +140,58 @@ export class BookmarkService {
         error.code === 'P2025'
       ) {
         throw new NotFoundException('Bookmark Not Found');
+      }
+      throw error;
+    }
+  }
+
+  async addBookmarkToFolder(
+    userId: number,
+    folderId: number,
+    bookmarkId: number,
+  ) {
+    try {
+      const bookmark = await this.prisma.bookmark.findFirst({
+        where: {
+          id: bookmarkId,
+          userId,
+        },
+      });
+      if (!bookmark) {
+        throw new NotFoundException('Bookmark not found');
+      }
+
+      if (bookmark.folderId === folderId) {
+        return {
+          message: 'Bookmark already in this folder',
+          bookmark,
+        };
+      }
+
+      const folder = await this.prisma.folder.findFirst({
+        where: {
+          id: folderId,
+          userId,
+        },
+      });
+      if (!folder) {
+        throw new NotFoundException('Folder not found');
+      }
+
+      const response = await this.prisma.bookmark.update({
+        where: {
+          id: bookmarkId,
+          userId,
+        },
+        data: {
+          folderId,
+        },
+      });
+
+      return response;
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        throw new NotFoundException('Error from database');
       }
       throw error;
     }

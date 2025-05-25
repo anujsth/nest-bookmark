@@ -9,6 +9,19 @@ export class FolderService {
 
   async createFolder(userId: number, body: CreateFolderDto) {
     try {
+
+      if(body.parentId){
+        const parentFolder = await this.prisma.folder.findFirst({
+          where: {
+            parentId: body.parentId,
+            userId,
+          }
+        })
+        if(!parentFolder){
+          throw new ConflictException('Parent folder not found');
+        }
+      }
+
       const response = await this.prisma.folder.create({
         data: {
           ...body,
@@ -43,4 +56,7 @@ export class FolderService {
       throw error;
     }
   }
+
+  async updateFolder(){}
+  
 }
